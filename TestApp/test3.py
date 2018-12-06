@@ -26,17 +26,13 @@ from bokeh.plotting import figure
 dm_range = (0.1,10.1)
 dm_range_spacing = 5
 
-#Default values for Creating the plots
-NumPulses = 1
-start_time = 0
-
 #Default values for psr_dict
 psr_dict = {}
 psr_dict['f0'] = 1400                   #Central frequency
 psr_dict['F0'] = 218                    #Pulsar spin freq
 psr_dict['bw'] = 400                    #Bandwidth
 psr_dict['Nf'] = 512                    #Frequency bins
-psr_dict['ObsTime'] = 30                #Observation time
+psr_dict['ObsTime'] = 20                #Observation time
 psr_dict['f_samp'] = 4                  #Sampling frequency
 psr_dict['SignalType'] = "intensity"    #'intensity' which carries a Nf x Nt
 #filterbank of pulses or 'voltage' which carries a 4 x Nt array of
@@ -54,10 +50,17 @@ psr_dict['freq_band'] = 1400            #Frequency band [327 ,430, 820, 1400, 23
 # name -- GBT or Arecibo
 # tau_scatter -- scattering time (ms)
 psr_dict['radiometer_noise'] =  False   #radiometer noise
-psr_dict['data_type']='int8'            #
+psr_dict['data_type']='float32'            #
 psr_dict['flux'] = 3
 psr_dict['to_DM_Broaden'] = True
-DMList = {}
+
+#Default values for Creating the plots
+NumPulses = 1
+startingPeriod = 1.0
+start_time = (startingPeriod / psr_dict['F0']) *1000  #Getting start time in ms
+start_bin = int((start_time)/TimeBinSize)
+TimeBinSize = 0
+
 fig = figure()
 
 
@@ -130,7 +133,8 @@ def genData():
 
     #Generate DM data
     i=dm_range[0]
-    while i<=dm_range[1]:
+    #while i<=dm_range[1]:
+    while i=0.1:
         #setup values
         nameString = 'dm' + str(i)
         psr_dict['dm'] = i
@@ -144,6 +148,9 @@ def genData():
 
         valueDict = {}
         #valueDict['start_time'] = start_time
+        print(stop_time)
+        print(s.signal.first_freq)
+        print(s.signal.last_freq)
         valueDict['stop_time'] = stop_time
         valueDict['first_freq'] = s.signal.first_freq
         valueDict['last_freq'] = s.signal.last_freq
