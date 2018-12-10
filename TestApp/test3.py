@@ -65,7 +65,7 @@ stop_time = (((1 / psr_dict['F0']) *1000) * NumPulses) + start_time
 stop_bin =int((stop_time)/TimeBinSize)
 first_freq = psr_dict['f0']-(psr_dict['bw']/2)
 last_freq = psr_dict['f0']+(psr_dict['bw']/2)
-FullData = []
+FullData = None
 
 ################################################################################
 dmSlider = widgets.Slider(title="Dispersion Measure", value= 0.1,
@@ -78,7 +78,7 @@ Exbutton = widgets.Button(label='Unused Button for now', button_type='success')
 
 
 def updateDMData(attrname, old, new):
-    source.data = dict(image=[FullData[dmSlider.value][:,:]])
+    source.data = dict(image=[FullData[dmSlider.value,:,:]])
 
 def setup():
     try:
@@ -93,6 +93,7 @@ def buttonClick():
 
 def genData():
     global FullData
+    FullData = []
     i = dm_range[0]
     while i<=dm_range[1]:
         psr_dict['dm']=i
@@ -103,6 +104,7 @@ def genData():
 
     f = h5py.File('PsrDMData.hdf5','w')
     dataString = 'Data'
+    FullData = np.array(FullData)
     f.create_dataset(dataString, data=FullData)
     f.close()
 
@@ -119,7 +121,7 @@ def readData():
 setup()
 #Bokeh Figure-------------------------------------------------------------------
 
-src = ColumnDataSource(data=dict(image=FullData[dm_range[0]][:,:]))
+src = ColumnDataSource(data=dict(image=FullData[0,:,:]))
 
 
 fig = figure(title='Filter Bank',
