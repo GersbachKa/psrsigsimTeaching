@@ -60,6 +60,8 @@ startingPeriod = 1.0
 start_time = (startingPeriod / psr_dict['F0']) *1000  #Getting start time in ms
 start_bin = int((start_time)/TimeBinSize)
 TimeBinSize = 0
+stop_bin =
+stop_time =
 
 fig = figure()
 
