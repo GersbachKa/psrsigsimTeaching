@@ -68,8 +68,8 @@ last_freq = psr_dict['f0']+(psr_dict['bw']/2)
 FullData = None
 
 ################################################################################
-dmSlider = widgets.Slider(title="Dispersion Measure", value= 0.1,
-                          start=dm_range[0], end=dm_range[1],
+dmSlider = widgets.Slider(title="Dispersion Measure", value= 1,
+                          start=dm_range[0]+1, end=dm_range[1],
                           step=dm_range_spacing)
 
 Exbutton = widgets.Button(label='Unused Button for now', button_type='success')
@@ -121,8 +121,10 @@ def readData():
 setup()
 #Bokeh Figure-------------------------------------------------------------------
 
-src = ColumnDataSource(data=dict(image=FullData[0,:,:]))
+src = ColumnDataSource(data=dict(image=FullData[1,:,:]))
 
+
+#np.save("FullData.npy",FullData)
 
 fig = figure(title='Filter Bank',
              x_range = Range1d(start_time,stop_time),
@@ -130,7 +132,12 @@ fig = figure(title='Filter Bank',
              x_axis_label = 'Observation Time (ms)',
              y_axis_label = 'Frequency (MHz)',
              tools = "crosshair,pan,reset,wheel_zoom")
-
+'''
+just a test
+fig.image(source = src, image='image', x=0, y=10,
+          dw=10, dh=10,
+          palette = 'Plasma256')
+'''
 fig.image(source = src, image='image', x=0, y=first_freq,
           dw=(stop_time-start_time), dh=(last_freq - first_freq),
           palette = 'Plasma256')
