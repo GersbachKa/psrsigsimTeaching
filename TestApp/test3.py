@@ -7,26 +7,23 @@ Ways to do this:
 2. Find a way to store a full bokeh.figure in a file
 
 '''
-#imports
+#imports------------------------------------------------------------------------
 import sys
 sys.path.insert(0,'/home/kyle/GWA/NANOGrav/PsrSigSim/')
 import psrsigsim as PSS
 import numpy as np
 import h5py
 
+
 #Bokeh imports
 from bokeh.io import curdoc, output_file, show
-from bokeh.layouts import row, widgetbox
+from bokeh.layouts import column, row, widgetbox
 from bokeh.models import ColumnDataSource, Range1d
 import bokeh.models.widgets as widgets
 from bokeh.plotting import figure
 
 
-#Constants for generating data
-dm_range = (0.1,10.1)
-dm_range_spacing = 5
-
-#Default values for psr_dict
+#Default values for psr_dict----------------------------------------------------
 psr_dict = {}
 psr_dict['f0'] = 1400                   #Central frequency
 psr_dict['F0'] = 218                    #Pulsar spin freq
@@ -54,118 +51,102 @@ psr_dict['data_type']='float32'            #
 psr_dict['flux'] = 3
 psr_dict['to_DM_Broaden'] = True
 
-#Default values for Creating the plots
+
+#Constants for generating data--------------------------------------------------
+dm_range = (0,10)
+dm_range_spacing = 1
 NumPulses = 1
 startingPeriod = 1.0
 start_time = (startingPeriod / psr_dict['F0']) *1000  #Getting start time in ms
+TimeBinSize = 0.0002499958334027766
 start_bin = int((start_time)/TimeBinSize)
-TimeBinSize = 0
-stop_bin =
-stop_time =
-
-fig = figure()
-
+stop_time = (((1 / psr_dict['F0']) *1000) * NumPulses) + start_time
+# start_time + however many pulses times the pulsar period in ms
+stop_bin =int((stop_time)/TimeBinSize)
+first_freq = psr_dict['f0']-(psr_dict['bw']/2)
+last_freq = psr_dict['f0']+(psr_dict['bw']/2)
+FullData = []
 
 ################################################################################
 dmSlider = widgets.Slider(title="Dispersion Measure", value= 0.1,
                           start=dm_range[0], end=dm_range[1],
                           step=dm_range_spacing)
 
-Exbutton = widgets.Button(label='Generate Filter Bank', button_type='success')
+Exbutton = widgets.Button(label='Unused Button for now', button_type='success')
 
 ################################################################################
 
-def updateData(attrname, old, new):
-    showFilterBank(dmSlider.value)
 
+def updateDMData(attrname, old, new):
+    source.data = dict(image=[FullData[dmSlider.value][:,:]])
 
 def setup():
+    try:
+        readData()
+    except:
+        genData()
 
-    #try:
-    #    checkData()
-    #except:
-    #    genData()
-    genData()
-    showFirst()
-
-def checkData():
-    f=h5py.File('PsrTestFile.hdf5','r')
-    f.close()
 
 def buttonClick():
     print('Click')
 
-def showFirst():
-    f=h5py.File('PsrTestFile.hdf5','r')
-
-
-    lis = DMList[str(dm_range[0])]
-    fig = figure(title='Filter Bank',
-                      x_range = Range1d(start_time,lis["stop_time"]),
-                      y_range = Range1d(lis["first_freq"],lis["last_freq"]),
-                      x_axis_label = 'Observation Time (ms)',
-                      y_axis_label = 'Frequency (Mhz)',
-                      tools="crosshair,pan,reset,wheel_zoom")
-
-    nameString = 'dm' + str(dm_range[0])
-    img = np.array(f.get(nameString))
-    fig.image(image=[img], x=[0], y=[1400], dw=[lis["stop_time"]],
-              dh=[lis["last_freq"]], palette='Plasma256')
-    fig.plot_height = 700
-    fig.plot_width = 700
-
-    f.close()
-
-
-def showFilterBank(dmVal):
-    f=h5py.File('PsrTestFile.hdf5','r')
-
-    lis = DMList[str(dmVal)]
-    fig.y_range = Range1d(lis["first_freq"],lis["last_freq"])
-    nameString = 'dm' + str(dmVal)
-    img = np.array(f.get(nameString))
-    fig.image(image=[img], x=[0], y=[1400], dw=[lis["stop_time"]],
-              dh=[lis["last_freq"]], palette='Plasma256')
-    f.close()
-
 
 def genData():
-
-    f=h5py.File('PsrTestFile.hdf5','a')
-
-    #Generate DM data
-    i=dm_range[0]
-    #while i<=dm_range[1]:
-    while i=0.1:
-        #setup values
-        nameString = 'dm' + str(i)
-        psr_dict['dm'] = i
-        s = PSS.Simulation(psr =  'J1713+0747' , sim_telescope= 'GBT',sim_ism= True, sim_scint= False, sim_dict = psr_dict)
-        s.simulate()
-        nBins_per_period = int(s.signal.MetaData.pulsar_period//s.signal.TimeBinSize)
-        stop_bin = NumPulses*nBins_per_period
-        stop_time = start_time + NumPulses * nBins_per_period * s.signal.TimeBinSize
-
-        img = s.signal.signal[:,:stop_bin]
-
-        valueDict = {}
-        #valueDict['start_time'] = start_time
-        print(stop_time)
-        print(s.signal.first_freq)
-        print(s.signal.last_freq)
-        valueDict['stop_time'] = stop_time
-        valueDict['first_freq'] = s.signal.first_freq
-        valueDict['last_freq'] = s.signal.last_freq
-        DMList[str(i)] = valueDict
-
-
+    global FullData
+    i = dm_range[0]
+    while i<=dm_range[1]:
+        psr_dict['dm']=i
+        psr = PSS.Simulation(psr =  'J1713+0747' , sim_telescope= 'GBT',sim_ism= True, sim_scint= False, sim_dict = psr_dict)
+        psr.simulate()
+        FullData.append(psr.signal.signal[:,start_bin:stop_bin])
         i+=dm_range_spacing
+
+    f = h5py.File('PsrDMData.hdf5','w')
+    dataString = 'Data'
+    f.create_dataset(dataString, data=FullData)
     f.close()
 
 
+def readData():
+    global FullData
+    f = h5py.File('PsrDMData.hdf5','r')
+    dataString = 'Data'
+    FullData = np.array(f.get(dataString))
+    print('successfully read data')
+    f.close()
 
-dmSlider.on_change('value', updateData)
-Exbutton.on_click(buttonClick)
+
 setup()
+#Bokeh Figure-------------------------------------------------------------------
 
-curdoc().add_root(row(dmSlider,Exbutton,fig))
+src = ColumnDataSource(data=dict(image=FullData[dm_range[0]][:,:]))
+
+
+fig = figure(title='Filter Bank',
+             x_range = Range1d(start_time,stop_time),
+             y_range = Range1d(first_freq,last_freq),
+             x_axis_label = 'Observation Time (ms)',
+             y_axis_label = 'Frequency (MHz)',
+             tools = "crosshair,pan,reset,wheel_zoom")
+
+fig.image(source = src, image='image', x=0, y=first_freq,
+          dw=(stop_time-start_time), dh=(last_freq - first_freq),
+          palette = 'Plasma256')
+'''
+Something is going wrong with the code above. For some reason, if I comment it
+out, it'll display the tools and a blank figure, but if I leave it in, nothing
+is displayed... I have no idea why
+'''
+
+fig.plot_height = 600
+fig.plot_width = 600
+#-------------------------------------------------------------------------------
+
+
+dmSlider.on_change('value', updateDMData)
+Exbutton.on_click(buttonClick)
+
+inputs = widgetbox(dmSlider,Exbutton)
+
+curdoc().add_root(row(inputs,fig))
+curdoc().title = "DM Variation"
