@@ -1,10 +1,4 @@
 '''
-Implement some type of h5py data storage
-Ways to do this:
-1. Move components of bokeh_plot into this file. Have bokeh_plot return just
-   the array. That way it can be stored in such a file (as I understand it)
-   Have this file create the images and display them
-2. Find a way to store a full bokeh.figure in a file
 
 '''
 #imports------------------------------------------------------------------------
@@ -56,7 +50,7 @@ psr_dict['to_DM_Broaden'] = True
 dm_range = (0,10)
 dm_range_spacing = 1
 NumPulses = 1
-startingPeriod = 1.0
+startingPeriod = 0
 start_time = (startingPeriod / psr_dict['F0']) *1000  #Getting start time in ms
 TimeBinSize = (1.0/psr_dict['f_samp']) * 0.001
 start_bin = int((start_time)/TimeBinSize)
@@ -97,10 +91,19 @@ def genData():
     i = dm_range[0]
     while i<=dm_range[1]:
         psr_dict['dm']=i
-        psr = PSS.Simulation(psr =  'J1713+0747' , sim_telescope= 'GBT',sim_ism= True, sim_scint= False, sim_dict = psr_dict)
+        psr = PSS.Simulation(psr =  None , sim_telescope= 'GBT',
+                             sim_ism= None, sim_scint= None,
+                             sim_dict = psr_dict)
+        psr.init_signal()
+        psr.init_pulsar()
+        psr.init_ism()
+        psr.pulsar.gauss_template(peak=.5)
         psr.simulate()
-        FullData.append(psr.signal.signal[:,start_bin:stop_bin])
-        print(psr.signal.TimeBinSize)
+        curData = psr.signal.signal[:,start_bin:stop_bin*NumPulses]
+        shiftAmt = int(psr.ISM.time_delays[-1] / TimeBinSize)
+        shiftAmt*=-1
+        curData = np.roll(curData,shiftAmt,2)
+        FullData.append(psr.signal.signal[:,start_bin:stop_bin*NumPulses])
         i+=dm_range_spacing
 
     f = h5py.File('PsrDMData.hdf5','w')
