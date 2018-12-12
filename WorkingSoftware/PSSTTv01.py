@@ -78,7 +78,7 @@ Exbutton = widgets.Button(label='Unused Button for now', button_type='success')
 
 
 def updateDMData(attrname, old, new):
-    src.data = dict(image=[FullData[dmSlider.value,:,:]],x=[0],y=[first_freq])
+    src.data = dict(image=[FullData[dmSlider.value,:,:]],x=[start_time],y=[first_freq])
 
 def setup():
     try:
@@ -122,7 +122,7 @@ def readData():
 setup()
 #Bokeh Figure-------------------------------------------------------------------
 
-src = ColumnDataSource(data=dict(image=[FullData[1,:,:]],x=[0],y=[first_freq]))
+src = ColumnDataSource(data=dict(image=[FullData[1,:,:]],x=[start_time],y=[first_freq]))
 
 
 fig = figure(title='Filter Bank',
