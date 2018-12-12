@@ -29,8 +29,8 @@ psr_dict['f0'] = 1400                   #Central frequency
 psr_dict['F0'] = 218                    #Pulsar spin freq
 psr_dict['bw'] = 400                    #Bandwidth
 psr_dict['Nf'] = 512                    #Frequency bins
-psr_dict['ObsTime'] = 20                #Observation time
-psr_dict['f_samp'] = .4                  #Sampling frequency
+psr_dict['ObsTime'] = 4*1000/psr_dict['F0']  #Observation time
+psr_dict['f_samp'] = 0.1                #Sampling frequency
 psr_dict['SignalType'] = "intensity"    #'intensity' which carries a Nf x Nt
 #filterbank of pulses or 'voltage' which carries a 4 x Nt array of
 #voltage vs. time pulses representing 4 stokes channels
@@ -49,14 +49,14 @@ psr_dict['freq_band'] = 1400            #Frequency band [327 ,430, 820, 1400, 23
 psr_dict['radiometer_noise'] =  False   #radiometer noise
 psr_dict['data_type']='float32'         #Was int8
 psr_dict['flux'] = 3
-psr_dict['to_DM_Broaden'] = True
+psr_dict['to_DM_Broaden'] = False
 
 
 #Constants for generating data--------------------------------------------------
 dm_range = (0,10)
-dm_range_spacing = 1
+dm_range_spacing = 0.5
 NumPulses = 1
-startingPeriod = 1.0
+startingPeriod = 2.0
 start_time = (startingPeriod / psr_dict['F0']) *1000  #Getting start time in ms
 TimeBinSize = (1.0/psr_dict['f_samp']) * 0.001
 start_bin = int((start_time)/TimeBinSize)
@@ -66,10 +66,10 @@ stop_bin =int((stop_time)/TimeBinSize)
 first_freq = psr_dict['f0']-(psr_dict['bw']/2)
 last_freq = psr_dict['f0']+(psr_dict['bw']/2)
 FullData = None
-
+DM_list = list(np.arange(dm_range[0],dm_range[1],step=dm_range_spacing))
 ################################################################################
-dmSlider = widgets.Slider(title="Dispersion Measure", value= 1,
-                          start=dm_range[0]+1, end=dm_range[1],
+dmSlider = widgets.Slider(title="Dispersion Measure", value= 0,
+                          start=dm_range[0], end=dm_range[1],
                           step=dm_range_spacing)
 
 Exbutton = widgets.Button(label='Unused Button for now', button_type='success')
@@ -78,7 +78,8 @@ Exbutton = widgets.Button(label='Unused Button for now', button_type='success')
 
 
 def updateDMData(attrname, old, new):
-    src.data = dict(image=[FullData[dmSlider.value,:,:]],x=[0],y=[first_freq])
+    idx = DM_list.index(dmSlider.value)
+    src.data = dict(image=[FullData[idx,:,:]],x=[start_time],y=[first_freq])
 
 def setup():
     try:
@@ -101,6 +102,7 @@ def genData():
         psr.simulate()
         FullData.append(psr.signal.signal[:,start_bin:stop_bin])
         print(psr.signal.TimeBinSize)
+        print('DM is ',i)
         i+=dm_range_spacing
 
     f = h5py.File('PsrDMData.hdf5','w')
@@ -122,7 +124,7 @@ def readData():
 setup()
 #Bokeh Figure-------------------------------------------------------------------
 
-src = ColumnDataSource(data=dict(image=[FullData[1,:,:]],x=[0],y=[first_freq]))
+src = ColumnDataSource(data=dict(image=[FullData[0,:,:]],x=[start_time],y=[first_freq]))
 
 
 fig = figure(title='Filter Bank',
