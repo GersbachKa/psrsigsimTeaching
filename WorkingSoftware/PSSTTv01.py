@@ -23,7 +23,7 @@ psr_dict['f0'] = 1400                   #Central frequency
 psr_dict['F0'] = 218                    #Pulsar spin freq
 psr_dict['bw'] = 400                    #Bandwidth
 psr_dict['Nf'] = 512                    #Frequency bins
-psr_dict['ObsTime'] = 4*1000/psr_dict['F0']  #Observation time
+psr_dict['ObsTime'] = 1000/psr_dict['F0']  #Observation time
 psr_dict['f_samp'] = 0.1                #Sampling frequency
 psr_dict['SignalType'] = "intensity"    #'intensity' which carries a Nf x Nt
 #filterbank of pulses or 'voltage' which carries a 4 x Nt array of
@@ -48,7 +48,7 @@ psr_dict['to_DM_Broaden'] = False
 
 #Constants for generating data--------------------------------------------------
 dm_range = (0,10)
-dm_range_spacing = 0.5
+dm_range_spacing = 0.25
 NumPulses = 1
 startingPeriod = 0
 start_time = (startingPeriod / psr_dict['F0']) *1000  #Getting start time in ms
@@ -106,7 +106,7 @@ def genData():
         psr.simulate()
         curData = psr.signal.signal[:,start_bin:stop_bin*NumPulses]
         curData = np.roll(curData, -1*(int(psr.ISM.time_delays[-1] / TimeBinSize)),1)
-        FullData.append(psr.signal.signal[:,start_bin:stop_bin*NumPulses])
+        FullData.append(curData)
         i+=dm_range_spacing
 
     f = h5py.File('PsrDMData.hdf5','w')
