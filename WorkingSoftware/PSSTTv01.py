@@ -12,7 +12,7 @@ import h5py
 #Bokeh imports
 from bokeh.io import curdoc, output_file, show
 from bokeh.layouts import column, row, widgetbox
-from bokeh.models import ColumnDataSource, Range1d
+from bokeh.models import ColumnDataSource, Range1d, LinearColorMapper
 import bokeh.models.widgets as widgets
 from bokeh.plotting import figure
 
@@ -128,6 +128,8 @@ def readData():
 setup()
 #Bokeh Figure-------------------------------------------------------------------
 
+CM = LinearColorMapper(palette="Plasma256", low=0.0025, high=10)
+
 src = ColumnDataSource(data=dict(image=[FullData[0,:,:]],x=[start_time],y=[first_freq]))
 
 
@@ -140,7 +142,7 @@ fig = figure(title='Filter Bank',
 
 fig.image(source = src,image='image',x='x', y='y',# image=[FullData[1,:,:]]
           dw=(stop_time-start_time), dh=(last_freq - first_freq),
-          palette = 'Plasma256')
+          color_mapper = CM)
 
 fig.plot_height = 600
 fig.plot_width = 600
