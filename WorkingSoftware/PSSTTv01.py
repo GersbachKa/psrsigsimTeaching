@@ -24,7 +24,7 @@ psr_dict['F0'] = 218                    #Pulsar spin freq
 psr_dict['bw'] = 400                    #Bandwidth
 psr_dict['Nf'] = 512                    #Frequency bins
 psr_dict['ObsTime'] = 1000/psr_dict['F0']  #Observation time
-psr_dict['f_samp'] = 0.1                #Sampling frequency
+psr_dict['f_samp'] = 0.2                #Sampling frequency
 psr_dict['SignalType'] = "intensity"    #'intensity' which carries a Nf x Nt
 #filterbank of pulses or 'voltage' which carries a 4 x Nt array of
 #voltage vs. time pulses representing 4 stokes channels
@@ -49,7 +49,8 @@ psr_dict['to_DM_Broaden'] = False
 #Constants for generating data--------------------------------------------------
 dm_range = (0,10)
 dm_range_spacing = 0.25
-NumPulses = 1
+NumPulses = 1 #Don't change this. A bunch of stuff uses variables that depend on
+#this being 1
 startingPeriod = 0
 start_time = (startingPeriod / psr_dict['F0']) *1000  #Getting start time in ms
 TimeBinSize = (1.0/psr_dict['f_samp']) * 0.001
@@ -76,7 +77,8 @@ DM_list = list(np.arange(dm_range[0],dm_range[1]+dm_range_spacing,step=dm_range_
 ScatterData = None
 #Scattering_list = list(np.arrange())
 
-FoldingData = None
+PreFoldingData = None
+PostFoldingData = None
 #Folding_list = list(np.arrange())
 
 ################################################################################
@@ -86,9 +88,13 @@ dmSlider = widgets.Slider(title="Dispersion Measure", value= 0,
 
 scStep = FL_bw/FL_Nf #Span of frequencies to one bin
 scStart = FL_f0 - (FL_bw/2) + (scStep/2) #Middle of the lowest frequency bin
-scEnd = FL_f0 + (FL_bw/2) - (scStep/2) #Middle of the highest frequency bin
-scSlider = widgets.Slider(title="Frequency",value= scStart  ,start= scStart,
+scEnd = FL_f0 + (FL_bw/2) - (scStep/2) #Middl6e of the highest frequency bin
+scSlider = widgets.Slider(title="Central Frequency",value= scStart  ,start= scStart,
                           end=scEnd, step=scStep)
+
+flSlider = widgets.Slider(title="Folding Frequency", value=psr_dict['F0'],
+                          start=psr_dict['F0']/2, end=psr_dict['F0']*2,
+                          step=10.9)
 
 Exbutton = widgets.Button(label='Unused Button for now', button_type='success')
 
@@ -103,6 +109,22 @@ def updateSCData(attrname, old, new):
     a = int((scSlider.value - scStart)/scStep)
     SCsrc.data = dict(x=np.linspace(0,1,ScatterData.shape[1]),
                                  y=ScatterData[a,:])
+
+def updateFLData(attrname, old, new):
+    calcFold(flSlider.value)
+    FLsrc.data = dict(x=np.linspace(0,1,PostFoldingData.shape[0]),
+                                 y=PostFoldingData)
+
+def calcFold(freq):
+    global PostFoldingData
+    foldingPeriod = (1.0/freq)*1000 #Given a frequency, what is the period
+    foldingBin = int(foldingPeriod/TimeBinSize) #length of period in terms of time binss
+    totalNum = PreFoldingData.shape[0] * PreFoldingData.shape[1] #Total Datapoints
+    height = int(totalNum / foldingBin) + 1 #Given the folding frequency, this would be how many times we fold
+    PostFoldingData = np.copy(PreFoldingData)
+    PostFoldingData.resize(foldingBin,height) #Resizing to the given specs
+    PostFoldingData = np.sum(PostFoldingData,axis=1) #summing the data points along the folded axis
+
 def setup():
     try:
         readData()
@@ -140,7 +162,7 @@ def genData():
         i+=dm_range_spacing
 
     #Folding
-    global FoldingData
+    global PreFoldingData
     psr_dict['tau_scatter'] = FL_tau_scatter
     psr_dict['f0'] = FL_f0
     psr_dict['bw'] = FL_bw
@@ -159,15 +181,16 @@ def genData():
     psr.pulsar.gauss_template(peak=.5)
     psr.init_telescope()
     psr.simulate()
-    FoldingData = psr.obs_signal + foldingAdditionFactor*psr.signal.signal[:]
-
+    currentData = psr.obs_signal + foldingAdditionFactor*psr.signal.signal
+    PreFoldingData = np.copy(np.swapaxes(currentData[:,start_bin:stop_bin],0,1))
+    #Deep copy of the data with swapped axis
 
     #Scattering
     global ScatterData
     psr.pulsar.gauss_template(peak=.25)
     psr.simulate()
 
-    ScatterData = psr.pulsar.profile[:,:]
+    ScatterData = psr.pulsar.profile
 
     f = h5py.File('PsrTeachingData.hdf5','w')
 
@@ -176,18 +199,17 @@ def genData():
     f.create_dataset(dataString, data=DMFullData)
 
     dataString = 'FLData'
-    f.create_dataset(dataString, data=FoldingData)
+    f.create_dataset(dataString, data=PreFoldingData)
 
     dataString = 'SCData'
     f.create_dataset(dataString, data=ScatterData)
-
 
     f.close()
 
 
 def readData():
     global DMFullData
-    global FoldingData
+    global PreFoldingData
     global ScatterData
     f = h5py.File('PsrTeachingData.hdf5','r')
 
@@ -195,7 +217,7 @@ def readData():
     DMFullData = np.array(f.get(dataString))
 
     dataString = 'FLData'
-    FoldingData = np.array(f.get(dataString))
+    PreFoldingData = np.array(f.get(dataString))
 
     dataString = 'SCData'
     ScatterData = np.array(f.get(dataString))
@@ -214,6 +236,7 @@ secondp = widgets.Div(text="""This is some more text explaining what this second
 
 thirdp = widgets.Div(text="""The same thing, but this time I'm <a href="http://nanograv.org/">Linking</a> something in it""",
              width=1000, height=100)
+
 
 
 #-------------------------------------------------------------------------------
@@ -255,7 +278,18 @@ SCfig.plot_width = 600
 
 #-------------------------------------------------------------------------------
 #Bokeh Folding Figure-----------------------------------------------------------
+calcFold(218)
 
+FLsrc = ColumnDataSource(data=dict(x = np.linspace(0,1,PostFoldingData.shape[0]),
+                             y = PostFoldingData ) )
+
+FLfig = figure(plot_width = 400, plot_height = 400,
+              #x_range = Range1d(start_time,stop_time),
+              y_range = Range1d(0,20),
+              x_axis_label = 'Phase',
+              y_axis_label = 'Pulse Intensity',)
+
+FLfig.line(source = FLsrc, x='x', y='y',)
 
 
 
@@ -263,12 +297,16 @@ SCfig.plot_width = 600
 
 dmSlider.on_change('value', updateDMData)
 scSlider.on_change('value', updateSCData)
+flSlider.on_change('value', updateFLData)
 #Exbutton.on_click(buttonClick)
 
 DMinputs = widgetbox(dmSlider)
 
 SCinputs = widgetbox(scSlider)
 
-curdoc().add_root(column(firstp ,row(DMinputs,DMfig), secondp,
-                         row(SCinputs,SCfig), thirdp,))
+FLinputs = widgetbox(flSlider)
+
+curdoc().add_root(column(firstp, row(DMinputs,DMfig),
+                         secondp, row(SCinputs,SCfig),
+                         thirdp, row(FLinputs,FLfig)))
 curdoc().title = "PsrSigSim Teaching Tool"
