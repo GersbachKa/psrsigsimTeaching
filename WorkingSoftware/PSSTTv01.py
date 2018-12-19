@@ -59,12 +59,36 @@ stop_time = (((1 / psr_dict['F0']) *1000) * NumPulses) + start_time
 stop_bin =int((stop_time)/TimeBinSize)
 first_freq = psr_dict['f0']-(psr_dict['bw']/2)
 last_freq = psr_dict['f0']+(psr_dict['bw']/2)
-FullData = None
+
+foldingAdditionFactor = 0.1
+FL_tau_scatter =0.005
+FL_f0 = 1150
+FL_bw = 1700
+FL_Nf = 34     #Using using 34, the Bandwidth will make integers for steps in the slider
+
+FL_dm = 0.001
+FL_flux = 80
+
+
+DMFullData = None
 DM_list = list(np.arange(dm_range[0],dm_range[1]+dm_range_spacing,step=dm_range_spacing))
+
+ScatterData = None
+#Scattering_list = list(np.arrange())
+
+FoldingData = None
+#Folding_list = list(np.arrange())
+
 ################################################################################
 dmSlider = widgets.Slider(title="Dispersion Measure", value= 0,
                           start=dm_range[0], end=dm_range[1],
                           step=dm_range_spacing)
+
+scStep = FL_bw/FL_Nf #Span of frequencies to one bin
+scStart = FL_f0 - (FL_bw/2) + (scStep/2) #Middle of the lowest frequency bin
+scEnd = FL_f0 + (FL_bw/2) - (scStep/2) #Middle of the highest frequency bin
+scSlider = widgets.Slider(title="Frequency",value= scStart  ,start= scStart,
+                          end=scEnd, step=scStep)
 
 Exbutton = widgets.Button(label='Unused Button for now', button_type='success')
 
@@ -73,8 +97,12 @@ Exbutton = widgets.Button(label='Unused Button for now', button_type='success')
 
 def updateDMData(attrname, old, new):
     idx = DM_list.index(dmSlider.value)
-    src.data = dict(image=[FullData[idx,:,:]],x=[start_time],y=[first_freq])
+    DMsrc.data = dict(image=[DMFullData[idx,:,:]],x=[start_time],y=[first_freq])
 
+def updateSCData(attrname, old, new):
+    a = int((scSlider.value - scStart)/scStep)
+    SCsrc.data = dict(x=np.linspace(0,1,ScatterData.shape[1]),
+                                 y=ScatterData[a,:])
 def setup():
     try:
         readData()
@@ -87,8 +115,10 @@ def buttonClick():
 
 
 def genData():
-    global FullData
-    FullData = []
+    #Dispersion Measure
+    print("Generating Data \nThis should take less than a minute...")
+    global DMFullData
+    DMFullData = []
     i = dm_range[0]
     while i<=dm_range[1]:
         if(i==0):
@@ -106,52 +136,139 @@ def genData():
         psr.simulate()
         curData = psr.signal.signal[:,start_bin:stop_bin*NumPulses]
         curData = np.roll(curData, -1*(int(psr.ISM.time_delays[-1] / TimeBinSize)),1)
-        FullData.append(curData)
+        DMFullData.append(curData)
         i+=dm_range_spacing
 
-    f = h5py.File('PsrDMData.hdf5','w')
-    dataString = 'Data'
-    FullData = np.array(FullData)
-    f.create_dataset(dataString, data=FullData)
+    #Folding
+    global FoldingData
+    psr_dict['tau_scatter'] = FL_tau_scatter
+    psr_dict['f0'] = FL_f0
+    psr_dict['bw'] = FL_bw
+    psr_dict['Nf'] = FL_Nf
+    psr_dict['dm'] = FL_dm
+    psr_dict['radiometer_noise'] =  True
+    psr_dict['flux'] = FL_flux
+    psr_dict['to_Scatter_Broaden_exp'] = True
+
+    psr = PSS.Simulation(psr =  None , sim_telescope= 'GBT',
+                             sim_ism= None, sim_scint= None,
+                             sim_dict = psr_dict)
+    psr.init_signal()
+    psr.init_pulsar()
+    psr.init_ism()
+    psr.pulsar.gauss_template(peak=.5)
+    psr.init_telescope()
+    psr.simulate()
+    FoldingData = psr.obs_signal + foldingAdditionFactor*psr.signal.signal[:]
+
+
+    #Scattering
+    global ScatterData
+    psr.pulsar.gauss_template(peak=.25)
+    psr.simulate()
+
+    ScatterData = psr.pulsar.profile[:,:]
+
+    f = h5py.File('PsrTeachingData.hdf5','w')
+
+    dataString = 'DMData'
+    DMFullData = np.array(DMFullData)
+    f.create_dataset(dataString, data=DMFullData)
+
+    dataString = 'FLData'
+    f.create_dataset(dataString, data=FoldingData)
+
+    dataString = 'SCData'
+    f.create_dataset(dataString, data=ScatterData)
+
+
     f.close()
 
 
 def readData():
-    global FullData
-    f = h5py.File('PsrDMData.hdf5','r')
-    dataString = 'Data'
-    FullData = np.array(f.get(dataString))
+    global DMFullData
+    global FoldingData
+    global ScatterData
+    f = h5py.File('PsrTeachingData.hdf5','r')
+
+    dataString = 'DMData'
+    DMFullData = np.array(f.get(dataString))
+
+    dataString = 'FLData'
+    FoldingData = np.array(f.get(dataString))
+
+    dataString = 'SCData'
+    ScatterData = np.array(f.get(dataString))
+
     print('successfully read data')
     f.close()
 
 
 setup()
-#Bokeh Figure-------------------------------------------------------------------
+#Bokeh Text boxes---------------------------------------------------------------
+firstp = widgets.Div(text="""This is some intro text explaining what this first plot isself.""",
+             width=1000, height=100)
 
-CM = LinearColorMapper(palette="Plasma256", low=0.0025, high=10)
+secondp = widgets.Div(text="""This is some more text explaining what this second plot is""",
+             width=1000, height=100)
 
-src = ColumnDataSource(data=dict(image=[FullData[0,:,:]],x=[start_time],y=[first_freq]))
+thirdp = widgets.Div(text="""The same thing, but this time I'm <a href="http://nanograv.org/">Linking</a> something in it""",
+             width=1000, height=100)
 
 
-fig = figure(title='Filter Bank',
+#-------------------------------------------------------------------------------
+#Bokeh Dispersion Figure--------------------------------------------------------
+
+DMCM = LinearColorMapper(palette="Plasma256", low=0.0025, high=10)
+
+DMsrc = ColumnDataSource(data=dict(image=[DMFullData[0,:,:]],x=[start_time],y=[first_freq]))
+
+
+DMfig = figure(title='Filter Bank',
              x_range = Range1d(start_time,stop_time),
              y_range = Range1d(first_freq,last_freq),
              x_axis_label = 'Observation Time (ms)',
              y_axis_label = 'Frequency (MHz)',
              tools = "crosshair,pan,reset,wheel_zoom")
 
-fig.image(source = src,image='image',x='x', y='y',# image=[FullData[1,:,:]]
+DMfig.image(source = DMsrc,image='image',x='x', y='y',# image=[DMFullData[1,:,:]]
           dw=(stop_time-start_time), dh=(last_freq - first_freq),
-          color_mapper = CM)
+          color_mapper = DMCM)
 
-fig.plot_height = 600
-fig.plot_width = 600
+DMfig.plot_height = 600
+DMfig.plot_width = 600
+
+#-------------------------------------------------------------------------------
+#Bokeh Scattering Figure--------------------------------------------------------
+SCsrc = ColumnDataSource(data=dict(x=np.linspace(0,1,ScatterData.shape[1]),
+                             y=ScatterData[0,:]))
+
+SCfig = figure(title='Scattering Demo',
+               x_range = Range1d(0,1),
+               y_range = Range1d(0,1),
+               x_axis_label = 'Phase',
+               y_axis_label = 'Pulse Intensity',)
+
+SCfig.line(source = SCsrc, x='x', y='y',)
+SCfig.plot_height = 600
+SCfig.plot_width = 600
+
+#-------------------------------------------------------------------------------
+#Bokeh Folding Figure-----------------------------------------------------------
+
+
+
+
 #-------------------------------------------------------------------------------
 
 dmSlider.on_change('value', updateDMData)
-Exbutton.on_click(buttonClick)
+scSlider.on_change('value', updateSCData)
+#Exbutton.on_click(buttonClick)
 
-inputs = widgetbox(dmSlider,Exbutton)
+DMinputs = widgetbox(dmSlider)
 
-curdoc().add_root(row(inputs,fig))
-curdoc().title = "DM Variation"
+SCinputs = widgetbox(scSlider)
+
+curdoc().add_root(column(firstp ,row(DMinputs,DMfig), secondp,
+                         row(SCinputs,SCfig), thirdp,))
+curdoc().title = "PsrSigSim Teaching Tool"
