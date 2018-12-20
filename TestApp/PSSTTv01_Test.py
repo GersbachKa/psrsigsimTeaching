@@ -117,21 +117,40 @@ def updateFLData(attrname, old, new):
                                  y=PostFoldingData)
 
 def calcFold(freq):
+    global PreFoldingData
     global PostFoldingData
+    PostFoldingData = None
     foldingPeriod = (1.0/freq)*1000 #Given a frequency, what is the period
-    foldingBin = int(foldingPeriod/TimeBinSize) #length of period in terms of time binss
-    totalNum = PreFoldingData.shape[0] * PreFoldingData.shape[1] #Total Datapoints
+    totalNum = PreFoldingData.size #Total Datapoints
+    foldingBin = int(foldingPeriod/TimeBinSize) #length of period in terms of time bins
     height = int(totalNum / foldingBin) + 1 #Given the folding frequency, this would be how many times we fold
-    PostFoldingData = np.copy(PreFoldingData)
-    PostFoldingData.resize(foldingBin,height) #Resizing to the given specs
+    PostFoldingData = np.resize(PreFoldingData,(foldingBin,height))#Resizing to the given specs
     PostFoldingData = np.sum(PostFoldingData,axis=1) #summing the data points along the folded axis
 
+def test():
+    global PreFoldingData
+    global PostFoldingData
+
+    genData()
+    test1 = np.copy(PreFoldingData)
+    calcFold(220)
+    test3 = np.copy(PostFoldingData)
+    PreFoldingData = None
+
+    readData()
+    test2 = np.copy(PreFoldingData)
+    calcFold(220)
+    test4 = np.copy(PostFoldingData)
+    print("This tests the origins {}".format(np.array_equal(test1,test2)))
+    print("This tests the calculated data {}".format(np.array_equal(test3,test4)))
+
+
 def setup():
+    test()
     try:
         readData()
     except:
         genData()
-
 
 
 def buttonClick():
@@ -193,6 +212,10 @@ def genData():
     psr.simulate()
 
     ScatterData = psr.pulsar.profile
+
+    #Remove an old file
+    if(os.path.exists('PsrTeachingData.hdf5')):
+        os.remove('PsrTeachingData.hdf5')
 
     f = h5py.File('PsrTeachingData.hdf5','w')
 
