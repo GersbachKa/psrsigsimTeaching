@@ -129,6 +129,7 @@ def calcFold(freq):
     totalNum = PreFoldingData.size #Total Datapoints
     height = int(totalNum / foldingBin) + 1 #Given the folding frequency, this would be how many times we fold
     PostFoldingData = np.array(PreFoldingData, copy=True)
+    print(PostFoldingData.shape)
     PostFoldingData.resize(foldingBin,height) #Resizing to the given specs
     PostFoldingData.sum(axis=1) #summing the data points along the folded axis
     return np.copy(PostFoldingData)
