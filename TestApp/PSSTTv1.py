@@ -76,9 +76,11 @@ DMFullData = None
 DM_list = list(np.arange(dm_range[0],dm_range[1]+dm_range_spacing,step=dm_range_spacing))
 
 ScatterData = None
+#Scattering_list = list(np.arrange())
 
 PreFoldingData = None
-
+PostFoldingData = None
+#Folding_list = list(np.arrange())
 
 ################################################################################
 dmSlider = widgets.Slider(title="Dispersion Measure", value= 0,
@@ -91,7 +93,7 @@ scEnd = FL_f0 + (FL_bw/2) - (scStep/2) #Middl6e of the highest frequency bin
 scSlider = widgets.Slider(title="Central Frequency",value= scStart  ,start= scStart,
                           end=scEnd, step=scStep)
 
-flSlider = widgets.Slider(title="Folding Frequency", value=psr_dict['F0'],
+flSlider = widgets.Slider(title="Folding Frequency", value=psr_dict['F0']+10.9,
                           start=psr_dict['F0']/2, end=psr_dict['F0']*2,
                           step=psr_dict['F0']*.05)
 
@@ -110,11 +112,12 @@ def updateSCData(attrname, old, new):
                                  y=ScatterData[a,:])
 
 def updateFLData(attrname, old, new):
-    postFold = calcFold(flSlider.value)
-    FLsrc.data = dict(x=np.linspace(0,1,postFold.shape[0]),
-                                 y=postFold)
+    calcFold(flSlider.value)
+    FLsrc.data = dict(x=np.linspace(0,1,PostFoldingData.shape[0]),
+                                 y=PostFoldingData)
 
-def workingCalfFold(freq):
+def calcFold(freq):
+    global PostFoldingData
     foldingPeriod = (1.0/freq)*1000 #Given a frequency, what is the period
     foldingBin = int(foldingPeriod/TimeBinSize) #length of period in terms of time binss
     totalNum = PreFoldingData.shape[0] * PreFoldingData.shape[1] #Total Datapoints
@@ -122,17 +125,6 @@ def workingCalfFold(freq):
     PostFoldingData = np.copy(PreFoldingData)
     PostFoldingData.resize(foldingBin,height) #Resizing to the given specs
     PostFoldingData = np.sum(PostFoldingData,axis=1) #summing the data points along the folded axis
-
-def calcFold(freq):
-    foldingPeriod = (1.0/freq)*1000 #Given a frequency, what is the period
-    foldingBin = int(foldingPeriod/TimeBinSize) #length of period in terms of time binss
-    totalNum = PreFoldingData.size #Total Datapoints
-    height = int(totalNum / foldingBin) + 1 #Given the folding frequency, this would be how many times we fold
-    PostFoldingData = np.array(PreFoldingData, copy=True)
-    print(PostFoldingData.shape)
-    PostFoldingData.resize(foldingBin,height) #Resizing to the given specs
-    PostFoldingData.sum(axis=1) #summing the data points along the folded axis
-    return np.copy(PostFoldingData)
 
 def setup():
     try:
@@ -201,6 +193,9 @@ def genData():
     psr.simulate()
 
     ScatterData = psr.pulsar.profile
+
+    if(os.path.exists('PsrTeachingData.hdf5')):
+        os.remove('PsrTeachingData.hdf5')
 
     f = h5py.File('PsrTeachingData.hdf5','w')
 
@@ -273,7 +268,6 @@ DMfig.plot_width = 500
 
 #-------------------------------------------------------------------------------
 #Bokeh Scattering Figure--------------------------------------------------------
-
 SCsrc = ColumnDataSource(data=dict(x=np.linspace(0,1,ScatterData.shape[1]),
                              y=ScatterData[0,:]))
 
@@ -290,10 +284,10 @@ SCfig.plot_width = 500
 
 #-------------------------------------------------------------------------------
 #Bokeh Folding Figure-----------------------------------------------------------
+calcFold(psr_dict['F0']+10.9)
 
-postFold = calcFold(psr_dict['F0'])
-FLsrc = ColumnDataSource(data=dict(x=np.linspace(0,1,postFold.shape[0]),
-                             y= postFold) )
+FLsrc = ColumnDataSource(data=dict(x = np.linspace(0,1,PostFoldingData.shape[0]),
+                             y = PostFoldingData ) )
 
 FLfig = figure(plot_width = 400, plot_height = 400,
               #x_range = Range1d(start_time,stop_time),
