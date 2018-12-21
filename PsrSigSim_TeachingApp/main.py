@@ -89,10 +89,10 @@ dmSlider = widgets.Slider(title="Dispersion Measure", value= 0,
 scStep = FL_bw/FL_Nf #Span of frequencies to one bin
 scStart = FL_f0 - (FL_bw/2) + (scStep/2) #Middle of the lowest frequency bin
 scEnd = FL_f0 + (FL_bw/2) - (scStep/2) #Middl6e of the highest frequency bin
-scSlider = widgets.Slider(title="Central Frequency",value= scStart  ,start= scStart,
+scSlider = widgets.Slider(title="Central Frequency (MHz)",value= scStart  ,start= scStart,
                           end=scEnd, step=scStep)
 
-flSlider = widgets.Slider(title="Folding Frequency", value=psr_dict['F0'],
+flSlider = widgets.Slider(title="Folding Frequency (MHz)", value=psr_dict['F0'],
                           start=psr_dict['F0']/2, end=psr_dict['F0']*2,
                           step=psr_dict['F0']*.05)
 
@@ -194,10 +194,10 @@ def genData():
 
     ScatterData = psr.pulsar.profile
 
-    if(os.path.exists('PsrSigSim_TeachingApp/DataFiles/PsrTeachingData.hdf5')):
-        os.remove('PsrSigSim_TeachingApp/DataFiles/PsrTeachingData.hdf5')
+    if(os.path.exists('PsrSigSim_TeachingApp/PsrTeachingData.hdf5')):
+        os.remove('PsrSigSim_TeachingApp/PsrTeachingData.hdf5')
 
-    f = h5py.File('PsrSigSim_TeachingApp/DataFiles/PsrTeachingData.hdf5','w')
+    f = h5py.File('PsrSigSim_TeachingApp/PsrTeachingData.hdf5','w')
 
     dataString = 'DMData'
     DMFullData = np.array(DMFullData)
@@ -217,7 +217,7 @@ def readData():
     global DMFullData
     global PreFoldingData
     global ScatterData
-    f = h5py.File('PsrSigSim_TeachingApp/DataFiles/PsrTeachingData.hdf5','r')
+    f = h5py.File('PsrSigSim_TeachingApp/PsrTeachingData.hdf5','r')
 
     dataString = 'DMData'
     DMFullData = np.array(f.get(dataString),copy=True)
