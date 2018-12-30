@@ -92,7 +92,7 @@ scEnd = FL_f0 + (FL_bw/2) - (scStep/2) #Middl6e of the highest frequency bin
 scSlider = widgets.Slider(title="Central Frequency (MHz)",value= scStart  ,start= scStart,
                           end=scEnd, step=scStep)
 
-flSlider = widgets.Slider(title="Folding Frequency (MHz)", value=psr_dict['F0'],
+flSlider = widgets.Slider(title="Folding Frequency (Hz)", value=psr_dict['F0'],
                           start=psr_dict['F0']/2, end=psr_dict['F0']*2,
                           step=psr_dict['F0']*.05)
 
@@ -257,7 +257,7 @@ foldPara = widgets.Div(text="""<h3>Folding</h3>
                                <p>If you were to simply point your radio telescope towards a known pulsar, you would see nothing but noise. The only way to actually see these pulsars is to use the process called Folding. Folding is the process of taking a large amount of data, over a long time period and, with some defined period <strong>T</strong>, we break the data into chunks all with that same time period <strong>T</strong>. Then add all of the segments at the same part of the phase together, sort of like the picture below:</p>
                                <p style="text-align: center;">&nbsp;<img src="PsrSigSim_TeachingApp/static/Folding.png" width="300" height="300"></p>
                                <p>Notice how the data beforehand looks as if its just completely random, however, if you were to fold the data with the same period as the pulsar you are observing, you notice that the pulse from that pulsar finally become visible. However, if you were to fold the data with the wrong period, you might not see it at all. This is because the location of the pulse on the graph shifts between folds, making it harder to detect.&nbsp;</p>
-                               <p>In this activity, you can move around the slider to adjust the frequency of which you are folding. This frequency corresponds to the period of which you fold through the&nbsp;<strong>T=1/F&nbsp;</strong>relation.&nbsp;The length of the period will change how long "phase" represents on the x-axis. A higher frequency means that the phase occupies a shorter amount of time and vice versa. You should notice that with a frequency of&nbsp;<strong>218 MHz</strong> the pulse is very much visible, as this is the frequency of the simulated pulsar. You might also see that at multiples and fractions of that frequency (i.e. <strong>109 MHz and 436MHz</strong>)<strong>&nbsp;</strong>the pulse(s) is actually still visible, this is due to the harmonics of the pulse and can help lead you to the correct value when searching, where the biggest difference between signal and noise exists.</p>
+                               <p>In this activity, you can move around the slider to adjust the frequency of which you are folding. This frequency corresponds to the period of which you fold through the&nbsp;<strong>T=1/F&nbsp;</strong>relation.&nbsp;The length of the period will change how long "phase" represents on the x-axis. A higher frequency means that the phase occupies a shorter amount of time and vice versa. You should notice that with a frequency of&nbsp;<strong>218 Hz</strong> the pulse is very much visible, as this is the frequency of the simulated pulsar. You might also see that at multiples and fractions of that frequency (i.e. <strong>109 Hz and 436 Hz</strong>)<strong>&nbsp;</strong>the pulse(s) is actually still visible, this is due to the harmonics of the pulse and can help lead you to the correct value when searching, where the biggest difference between signal and noise exists.</p>
                                <p>&nbsp;</p>""",
                                )
 
@@ -335,7 +335,7 @@ FLfig = figure(plot_width = 400, plot_height = 400,
 FLfig.line(source = FLsrc, x='x', y='y',)
 FLfig.plot_height = 500
 FLfig.plot_width = 500
-
+FLfig.yaxis.major_label_text_font_size = '0pt'
 
 #-------------------------------------------------------------------------------
 
