@@ -1,0 +1,70 @@
+{
+    "dm_constants": {
+        "dm_psr_dict": {
+            "F0": 218,
+            "Nf": 512,
+            "ObsTime": null,
+            "SignalType": "intensity",
+            "bw": 400,
+            "data_type": "float32",
+            "dm": 0.1,
+            "f0": 1400,
+            "f_samp": 0.2,
+            "flux": 3,
+            "freq_band": 1400,
+            "radiometer_noise": false,
+            "scint_bw": 15.6,
+            "scint_timescale": 2630,
+            "to_DM_Broaden": false
+        },
+        "dm_range": [
+            0,
+            10
+        ],
+        "dm_range_spacing": 0.25
+    },
+    "fold_constants": {
+        "fold_psr_dict": {
+            "F0": 218,
+            "Nf": 34,
+            "ObsTime": null,
+            "SignalType": "intensity",
+            "bw": 1700,
+            "data_type": "float32",
+            "dm": 0.001,
+            "f0": 1150,
+            "f_samp": 0.2,
+            "flux": 80,
+            "freq_band": 1400,
+            "radiometer_noise": true,
+            "scint_bw": 15.6,
+            "scint_timescale": 2630,
+            "tau_scatter": 0.005,
+            "to_DM_Broaden": false,
+            "to_Scatter_Broaden_exp": false
+        },
+        "fold_signalMultiplier": 0.1
+    },
+    "scatter_constants": {
+        "scatter_psr_dict": {
+            "F0": 218,
+            "Nf": 34,
+            "ObsTime": null,
+            "SignalType": "intensity",
+            "bw": 1700,
+            "data_type": "float32",
+            "dm": 0.001,
+            "f0": 1150,
+            "f_samp": 0.2,
+            "flux": 80,
+            "freq_band": 1400,
+            "radiometer_noise": true,
+            "scint_bw": 15.6,
+            "scint_timescale": 2630,
+            "tau_scatter": 0.005,
+            "to_DM_Broaden": false,
+            "to_Scatter_Broaden_exp": true
+        },
+        "scatter_signalMultiplier": 0.1
+    }
+}
