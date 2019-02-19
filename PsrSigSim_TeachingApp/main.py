@@ -312,6 +312,9 @@ DMfig.image(source = DMsrc,image='image',x='x', y='y',# image=[DMFullData[1,:,:]
 DMfig.plot_height = 500
 DMfig.plot_width = 500
 
+DMinputs = widgetbox(dmSlider)
+dmRow = row(DMinputs,DMfig,sizing_mode='scale_width')
+
 #-------------------------------------------------------------------------------
 #Bokeh Scattering Figure--------------------------------------------------------
 SCsrc = ColumnDataSource(data=dict(x=np.linspace(0,1,ScatterData.shape[1]),
@@ -327,6 +330,9 @@ SCfig = figure(title='Scattering Demo',
 SCfig.line(source = SCsrc, x='x', y='y',)
 SCfig.plot_height = 500
 SCfig.plot_width = 500
+
+SCinputs = widgetbox(scSlider)
+scRow = row(SCinputs,SCfig,sizing_mode='scale_width')
 
 #-------------------------------------------------------------------------------
 #Bokeh Folding Figure-----------------------------------------------------------
@@ -347,25 +353,27 @@ FLfig.plot_height = 500
 FLfig.plot_width = 500
 FLfig.yaxis.major_label_text_font_size = '0pt'
 
+FLinputs = widgetbox(flSlider)
+flRow = row(FLinputs,FLfig,sizing_mode='scale_width')
+
 #-------------------------------------------------------------------------------
 #Question answer----------------------------------------------------------------
 def updateQuestion():
     global ansQ
-    global layoutList
     if(ansQ==False):
         response = answerGroup.active
         if(response != 1):
             #display wrong answer message
-            if(layoutList.count([questionWrongPara])==0):
-                layoutList.insert(4,[questionWrongPara])
-                updateDocument()
+            if(l.children.count(questionWrongPara)==0):
+                l.children.insert(4,questionWrongPara)
+                #updateDocument()
         else:
             #Display the widgets
             ansQ = True
-            if(layoutList.count([questionWrongPara])!=0):
-                layoutList.remove([questionWrongPara])
-            layoutList.insert(4,[FLinputs,FLfig])
-            updateDocument()
+            if(l.children.count(questionWrongPara)!=0):
+                l.children.remove(questionWrongPara)
+            l.children.insert(4,flRow)
+            #updateDocument()
 
 
 #-------------------------------------------------------------------------------
@@ -389,11 +397,8 @@ answerButton.on_click(updateQuestion)
 
 question = widgetbox(answerGroup,answerButton)
 
-DMinputs = widgetbox(dmSlider)
 
-SCinputs = widgetbox(scSlider)
 
-FLinputs = widgetbox(flSlider)
 
 layoutList = [
             [introPara],
