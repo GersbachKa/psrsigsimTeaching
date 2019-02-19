@@ -81,6 +81,8 @@ ScatterData = None
 PreFoldingData = None
 PostFoldingData = None
 
+ansQ = False
+
 ################################################################################
 dmSlider = widgets.Slider(title="Dispersion Measure", value= 0,
                           start=dm_range[0], end=dm_range[1],
@@ -96,7 +98,10 @@ flSlider = widgets.Slider(title="Folding Frequency (Hz)", value=psr_dict['F0'],
                           start=psr_dict['F0']/2, end=psr_dict['F0']*2,
                           step=psr_dict['F0']*.05)
 
-Exbutton = widgets.Button(label='Unused Button for now', button_type='success')
+
+answerGroup = widgets.RadioGroup(labels=["Answer 1", "Answer 2", "Answer 3"],active=None)
+
+answerButton = widgets.Button(label='Submit answer', button_type='success')
 
 ################################################################################
 
@@ -280,6 +285,11 @@ LastPara = widgets.Div(text="""<p style="text-align: center;">This work was part
                                )
 
 
+questionPara = widgets.Div(text="""<h3>Question</h3>
+                                   <p>This is a test quesiton. The answer is #2.</p>""")
+
+questionWrongPara = widgets.Div(text="""<p>You got the question wrong. please pick answer #2</p>""")
+
 #-------------------------------------------------------------------------------
 #Bokeh Dispersion Figure--------------------------------------------------------
 
@@ -338,11 +348,46 @@ FLfig.plot_width = 500
 FLfig.yaxis.major_label_text_font_size = '0pt'
 
 #-------------------------------------------------------------------------------
+#Question answer----------------------------------------------------------------
+def updateQuestion():
+    global ansQ
+    global layoutList
+    if(ansQ==False):
+        response = answerGroup.active
+        if(response != 1):
+            #display wrong answer message
+            if(layoutList.count([questionWrongPara])==0):
+                layoutList.insert(4,[questionWrongPara])
+                updateDocument()
+        else:
+            #Display the widgets
+            ansQ = True
+            if(layoutList.count([questionWrongPara])!=0):
+                layoutList.remove([questionWrongPara])
+            layoutList.insert(4,[FLinputs,FLfig])
+            updateDocument()
+
+
+#-------------------------------------------------------------------------------
+#Refresh the display------------------------------------------------------------
+def updateDocument():
+    print("Attempting to update the document")
+    curdoc().clear()
+    curdoc().add_root(layout(layoutList,sizing_mode='scale_width'))
+
+
+#-------------------------------------------------------------------------------
+
+
+
 
 dmSlider.on_change('value', updateDMData)
 scSlider.on_change('value', updateSCData)
 flSlider.on_change('value', updateFLData)
-#Exbutton.on_click(buttonClick)
+
+answerButton.on_click(updateQuestion)
+
+question = widgetbox(answerGroup,answerButton)
 
 DMinputs = widgetbox(dmSlider)
 
@@ -350,17 +395,20 @@ SCinputs = widgetbox(scSlider)
 
 FLinputs = widgetbox(flSlider)
 
-l = layout([
+layoutList = [
             [introPara],
             [backgroundPara],
             [foldPara],
-            [FLinputs,FLfig],
+            [questionPara,question],
+            #[FLinputs,FLfig],
             [dmPara],
             [DMinputs,DMfig],
-            [ScatterPara],
-            [SCinputs,SCfig],
+            #[ScatterPara],
+            #[SCinputs,SCfig],
             [LastPara]
-           ],sizing_mode='scale_width')
+           ]
+
+l = layout(layoutList,sizing_mode='scale_width')
 
 curdoc().add_root(l)
 curdoc().title = "PsrSigSim Teaching Tool"
