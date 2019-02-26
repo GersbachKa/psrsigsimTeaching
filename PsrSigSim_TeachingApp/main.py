@@ -12,7 +12,7 @@ import os
 
 #Bokeh imports
 from bokeh.io import curdoc, output_file, show
-from bokeh.layouts import column, row, widgetbox, layout
+from bokeh.layouts import column, row, widgetbox, layout, Spacer
 from bokeh.models import ColumnDataSource, Range1d, LinearColorMapper
 import bokeh.models.widgets as widgets
 from bokeh.plotting import figure
@@ -81,7 +81,6 @@ ScatterData = None
 PreFoldingData = None
 PostFoldingData = None
 
-ansQ = False
 
 ################################################################################
 dmSlider = widgets.Slider(title="Dispersion Measure", value= 0,
@@ -99,9 +98,15 @@ flSlider = widgets.Slider(title="Folding Frequency (Hz)", value=psr_dict['F0'],
                           step=psr_dict['F0']*.05)
 
 
-answerGroup = widgets.RadioGroup(labels=["Answer 1", "Answer 2", "Answer 3"],active=None)
+question1Group = widgets.RadioGroup(labels=["Answer 1", "Answer 2", "Answer 3"],active=None)
+question1Button = widgets.Button(label='Submit answer', button_type='success')
 
-answerButton = widgets.Button(label='Submit answer', button_type='success')
+question2Group = widgets.RadioGroup(labels=["Answer 1", "Answer 2", "Answer 3"],active=None)
+question2Button = widgets.Button(label='Submit answer', button_type='success')
+
+question3Group = widgets.RadioGroup(labels=["Answer 1", "Answer 2", "Answer 3"],active=None)
+question3Button = widgets.Button(label='Submit answer', button_type='success')
+
 
 ################################################################################
 
@@ -285,12 +290,33 @@ LastPara = widgets.Div(text="""<p style="text-align: center;">This work was part
                                )
 
 
-questionPara = widgets.Div(text="""<h3>Question</h3>
+
+#Folding question---------------------------------------------------------------
+question1Para = widgets.Div(text="""<h3>Question 1</h3>
                                    <p>This is a test quesiton. The answer is #2.</p>""")
 
-questionWrongPara = widgets.Div(text="""<p>You got the question wrong. please pick answer #2</p>""")
-
+question1RightPara = widgets.Div(text="""<p>Correct! (reaon why)</p>""")
+question1WrongPara1 = widgets.Div(text="""<p>Wrong answer #1. please pick answer #2</p>""")
+question1WrongPara2 = widgets.Div(text="""<p>Wrong answer #2. please pick answer #2</p>""")
 #-------------------------------------------------------------------------------
+#Dispersion question------------------------------------------------------------
+question2Para = widgets.Div(text="""<h3>Question 2</h3>
+                                   <p>This is a test quesiton. The answer is #1.</p>""")
+
+question2RightPara = widgets.Div(text="""<p>Correct! (reaon why)</p>""")
+question2WrongPara1 = widgets.Div(text="""<p>Wrong answer #1. please pick answer #2</p>""")
+question2WrongPara2 = widgets.Div(text="""<p>Wrong answer #2. please pick answer #2</p>""")
+#-------------------------------------------------------------------------------
+#Scattering question------------------------------------------------------------
+question3Para = widgets.Div(text="""<h3>Question 3</h3>
+                                   <p>This is a test quesiton. The answer is #2.</p>""")
+
+question3RightPara = widgets.Div(text="""<p>Correct! (reaon why)</p>""")
+question3WrongPara1 = widgets.Div(text="""<p>Wrong answer #1. please pick answer #2</p>""")
+question3WrongPara2 = widgets.Div(text="""<p>Wrong answer #2. please pick answer #2</p>""")
+#-------------------------------------------------------------------------------
+
+
 #Bokeh Dispersion Figure--------------------------------------------------------
 
 DMCM = LinearColorMapper(palette="Plasma256", low=0.0025, high=10)
@@ -313,7 +339,6 @@ DMfig.plot_height = 500
 DMfig.plot_width = 500
 
 DMinputs = widgetbox(dmSlider)
-dmRow = row(DMinputs,DMfig,sizing_mode='scale_width')
 
 #-------------------------------------------------------------------------------
 #Bokeh Scattering Figure--------------------------------------------------------
@@ -332,7 +357,6 @@ SCfig.plot_height = 500
 SCfig.plot_width = 500
 
 SCinputs = widgetbox(scSlider)
-scRow = row(SCinputs,SCfig,sizing_mode='scale_width')
 
 #-------------------------------------------------------------------------------
 #Bokeh Folding Figure-----------------------------------------------------------
@@ -354,38 +378,77 @@ FLfig.plot_width = 500
 FLfig.yaxis.major_label_text_font_size = '0pt'
 
 FLinputs = widgetbox(flSlider)
-flRow = row(FLinputs,FLfig,sizing_mode='scale_width')
 
 #-------------------------------------------------------------------------------
-#Question answer----------------------------------------------------------------
-def updateQuestion():
-    global ansQ
-    if(ansQ==False):
-        response = answerGroup.active
-        if(response != 1):
-            #display wrong answer message
-            if(l.children.count(questionWrongPara)==0):
-                l.children.insert(4,questionWrongPara)
-                #updateDocument()
+
+
+
+
+#Folding Question---------------------------------------------------------------
+latest_answer1 = None
+def updateQuestion1():
+    global latest_answer1
+    response = int(question1Group.active)
+    lay = l.children[3].children[0].children[0]
+    if(response != latest_answer1):
+        if(response == 0):
+            #Display wrong answer message 1
+            lay.children[3]=question1WrongPara1
+        elif(response == 2):
+            #Display wrong answer message 2
+            lay.children[3]=question1WrongPara2
         else:
-            #Display the widgets
-            ansQ = True
-            if(l.children.count(questionWrongPara)!=0):
-                l.children.remove(questionWrongPara)
-            l.children.insert(4,flRow)
-            #updateDocument()
-
+            #Remove the answering and place the widget
+            lay.children[2]=question1RightPara
+            lay.children[3]=flSlider
+    else:
+        #Same response, do nothing
+        pass
+#-------------------------------------------------------------------------------
+#Dispersion Question---------------------------------------------------------------
+latest_answer2 = None
+def updateQuestion2():
+    global latest_answer2
+    response = int(question2Group.active)
+    lay = l.children[5].children[0].children[0]
+    if(response != latest_answer2):
+        if(response == 1):
+            #Display wrong answer message 1
+            lay.children[3]=question2WrongPara1
+        elif(response == 2):
+            #Display wrong answer message 2
+            lay.children[3]=question2WrongPara2
+        else:
+            #Remove the answering and place the widget
+            lay.children[2]=question2RightPara
+            lay.children[3]=dmSlider
+    else:
+        #Same response, do nothing
+        pass
 
 #-------------------------------------------------------------------------------
-#Refresh the display------------------------------------------------------------
-def updateDocument():
-    print("Attempting to update the document")
-    curdoc().clear()
-    curdoc().add_root(layout(layoutList,sizing_mode='scale_width'))
-
+#Scattering Question---------------------------------------------------------------
+latest_answer3 = None
+def updateQuestion3():
+    global latest_answer3
+    response = int(question3Group.active)
+    lay = l.children[7].children[0].children[0]
+    if(response != latest_answer3):
+        if(response == 0):
+            #Display wrong answer message 1
+            lay.children[3]=question3WrongPara1
+        elif(response == 2):
+            #Display wrong answer message 2
+            lay.children[3]=question3WrongPara2
+        else:
+            #Remove the answering and place the widget
+            lay.children[2]=question3RightPara
+            lay.children[3]=scSlider
+    else:
+        #Same response, do nothing
+        pass
 
 #-------------------------------------------------------------------------------
-
 
 
 
@@ -393,10 +456,22 @@ dmSlider.on_change('value', updateDMData)
 scSlider.on_change('value', updateSCData)
 flSlider.on_change('value', updateFLData)
 
-answerButton.on_click(updateQuestion)
+question1Button.on_click(updateQuestion1)
+question2Button.on_click(updateQuestion2)
+question3Button.on_click(updateQuestion3)
 
-question = widgetbox(answerGroup,answerButton)
 
+foldingActivity = row(children=[column(children=
+                      [question1Para,question1Group,question1Button,Spacer(height=5)],sizing_mode='scale_width'),
+                      FLfig],sizing_mode='scale_width')
+
+dispersionActivity = row(children=[column(children=
+                      [question2Para,question2Group,question2Button,Spacer(height=5)],sizing_mode='scale_width'),
+                      DMfig],sizing_mode='scale_width')
+
+scatteringActivity = row(children=[column(children=
+                      [question3Para,question3Group,question3Button,Spacer(height=5)],sizing_mode='scale_width'),
+                      SCfig],sizing_mode='scale_width')
 
 
 
@@ -404,12 +479,11 @@ layoutList = [
             [introPara],
             [backgroundPara],
             [foldPara],
-            [questionPara,question],
-            #[FLinputs,FLfig],
+            [foldingActivity], #i=3
             [dmPara],
-            [DMinputs,DMfig],
-            #[ScatterPara],
-            #[SCinputs,SCfig],
+            [dispersionActivity], #i=5
+            [ScatterPara],
+            [scatteringActivity], #i=7
             [LastPara]
            ]
 
