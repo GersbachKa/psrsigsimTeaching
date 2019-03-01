@@ -90,12 +90,14 @@ dmSlider = widgets.Slider(title="Dispersion Measure", value= 0,
 scStep = FL_bw/FL_Nf #Span of frequencies to one bin
 scStart = FL_f0 - (FL_bw/2) + (scStep/2) #Middle of the lowest frequency bin
 scEnd = FL_f0 + (FL_bw/2) - (scStep/2) #Middl6e of the highest frequency bin
-scSlider = widgets.Slider(title="Central Frequency (MHz)",value= scEnd ,start= scStart,
+scSlider = widgets.Slider(title="Frequency (MHz)",value= scEnd ,start= scStart,
                           end=scEnd, step=scStep)
 
 flSlider = widgets.Slider(title="Folding Frequency (Hz)", value=psr_dict['F0']/2,
                           start=psr_dict['F0']/4, end=psr_dict['F0']*3,
                           step=psr_dict['F0']*.05)
+
+
 
 
 question1Group = widgets.RadioGroup(labels=["The plot would have 2 pulses with a larger Signal to Noise ratio",
@@ -320,9 +322,9 @@ question1WrongPara2 = widgets.Div(text="""<h3>Close.</h3>
 #-------------------------------------------------------------------------------
 #Dispersion question------------------------------------------------------------
 question2Para = widgets.Div(text="""<h3>Question 2</h3>
-                                   <p>To the right is a filterbank plot of a pulsar with a Dispersion Measure(DM) of 0 pc/cm3.
+                                   <p>To the right is a filterbank plot of a pulsar with a Dispersion Measure(DM) of 0 pc/cm<sup>3</sup>.
                                    Without any dispersion, the entire pulse arrives at the same time.
-                                   If, instead, the pulsar had a DM of 7 pc/cm3, what which frequencies would arrive first?</p>""")
+                                   If, instead, the pulsar had a DM of 7 pc/cm<sup>3</sup>, what which frequencies would arrive first?</p>""")
 
 question2RightPara = widgets.Div(text="""<h3>Correct!</h3>""")
 
@@ -337,7 +339,7 @@ question3Para = widgets.Div(text="""<h3>Question 3</h3>
                                    when would the middle frequency arrive?</p>""")
 
 question3RightPara = widgets.Div(text="""<h3>Correct!</h3>
-                                        <p>Because of the f^(-2) dependence, the middle frequency would arrive before t=1</p>""")
+                                        <p>Because of the 1 / f <sup>2</sup> dependence, the middle frequency would arrive before t=1</p>""")
 question3WrongPara1 = widgets.Div(text="""<h3>Not quite.</h3>
                                         <p>What is the time dependence on frequency in this case?</p>""")
 question3WrongPara2 = widgets.Div(text="""<h3>Almost.</h3>
@@ -349,11 +351,14 @@ question4Para = widgets.Div(text="""<h3>Question 4</h3>
                                    If you were to lower the frequency to show the effects of this scattering, what would the pulse look like?</p>""")
 
 question4RightPara = widgets.Div(text="""<h3>Correct!</h3>
-                                        <p>(reaon why)</p>""")
+                                        <p>Because the overall energy is the same, having a tail would mean that the peak would need to decrease.
+                                        The tail is after the peak due to the scattered light taking a longer path than the non-scattered.</p>
+                                        <p>*Note: Due to the 1 / f <sup>4</sup> dependence, things at anything but the lowest frequencies look nearly identicle</p>""")
 question4WrongPara1 = widgets.Div(text="""<h3>Not quite.</h3>
-                                        <p>(reaon why)</p>""")
+                                        <p>What happens to the path length of the light that gets scattered versus non-scattered</p>""")
 question4WrongPara2 = widgets.Div(text="""<h3>Almost.</h3>
-                                        <p>(reaon why)</p>""")
+                                        <p>Think about the conservation of energy.
+                                        If a single pulse is spread over more distance, what would happen to the peak?</p>""")
 #-------------------------------------------------------------------------------
 
 
