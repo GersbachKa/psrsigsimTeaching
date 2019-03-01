@@ -95,7 +95,7 @@ scSlider = widgets.Slider(title="Frequency (MHz)",value= scEnd ,start= scStart,
 
 flSlider = widgets.Slider(title="Folding Frequency (Hz)", value=psr_dict['F0']/2,
                           start=psr_dict['F0']/4, end=psr_dict['F0']*3,
-                          step=psr_dict['F0']*.05)
+                          step=psr_dict['F0']*.01)
 
 
 
@@ -528,9 +528,10 @@ question3Button.on_click(updateQuestion3)
 question4Button.on_click(updateQuestion4)
 
 
-foldingActivity = row(children=[column(children=
-                      [question1Para,question1Group,question1Button,Spacer(height=5)],sizing_mode='scale_width'),
-                      FLfig],sizing_mode='scale_width')
+foldColumn = column(children=[question1Para,question1Group,question1Button,Spacer(height=5)],sizing_mode='scale_width')
+foldColumn.width = 750
+foldColumn.height = 500
+foldingActivity = row(children=[foldColumn,FLfig],sizing_mode='scale_width')
 
 dispersionActivity = row(children=[column(children=
                       [question2Para,question2Group,question2Button,Spacer(height=1),Spacer(height=1),Spacer(height=1),Spacer(height=1)],sizing_mode='scale_width'),
