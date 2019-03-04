@@ -1,6 +1,6 @@
 
 To start this program:
-1. Make sure to edit PsrSigSim_TeachingApp/main.py so that the PsrSigSim import is directed at the correct place.
+1. Make sure to edit PsrSigSim_TeachingApp/main.py so that the pssPath string is directed at the location of your PSS.
 2. Go into terminal and navigate to this folder that contains the PsrSigSim_TeachingApp folder
 3. Type: bokeh serve --show PsrSigSim_TeachingApp
 
