@@ -2,12 +2,12 @@
 
 '''
 #imports------------------------------------------------------------------------
-import sys
-sys.path.insert(0,'/home/kyle/GWA/NANOGrav/PsrSigSim/')
-import psrsigsim as PSS
 import numpy as np
 import h5py
 import os
+
+#Change this path to specify the location of the PsrSigSim
+pssPath = '/home/kyle/GWA/NANOGrav/PsrSigSim/'
 
 
 #Bokeh imports
@@ -155,13 +155,14 @@ def setup():
     except:
         genData()
 
-
-
-def buttonClick():
-    print('Click')
-
-
 def genData():
+    try:
+        import sys
+        sys.path.insert(0,pssPath)
+        import psrsigsim as PSS
+    except:
+        print("No PSS installed or location not specified")
+
     #Dispersion Measure
     print("Generating Data \nThis should take less than a minute...")
     global DMFullData
@@ -367,7 +368,7 @@ question4WrongPara2 = widgets.Div(text="""<h3>Almost.</h3>
 
 DMCM = LinearColorMapper(palette="Plasma256", low=0.0025, high=10)
 
-DMsrc = ColumnDataSource(data=dict(image=[DMFullData[0,:,:]],x=[start_time],y=[first_freq]))
+DMsrc = ColumnDataSource( data=dict(image=[DMFullData[0,:,:]],x=[start_time],y=[first_freq]) )
 
 
 DMfig = figure(title='Filter Bank',
