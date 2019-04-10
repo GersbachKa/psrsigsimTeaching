@@ -359,7 +359,7 @@ question4Para = widgets.Div(text="""<h3>Question 4</h3>
 question4RightPara = widgets.Div(text="""<h3>Correct!</h3>
                                         <p>Because the overall energy is the same, having a tail would mean that the peak would need to decrease.
                                         The tail is after the peak due to the scattered light taking a longer path than the non-scattered.</p>
-                                        <p>*Note: Due to the 1 / f <sup>4</sup> dependence, things at anything but the lowest frequencies look nearly identicle</p>""")
+                                        <p>*Note: Due to the 1 / f <sup>4</sup> dependence, things at anything but the lowest frequencies look nearly identical</p>""")
 question4WrongPara1 = widgets.Div(text="""<h3>Not quite.</h3>
                                         <p>What happens to the path length of the light that gets scattered versus non-scattered</p>""")
 question4WrongPara2 = widgets.Div(text="""<h3>Almost.</h3>
