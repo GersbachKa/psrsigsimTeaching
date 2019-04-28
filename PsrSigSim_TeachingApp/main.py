@@ -5,71 +5,35 @@
 import numpy as np
 import h5py
 import os
+import json
 
 #Change this path to specify the location of the PsrSigSim
 pssPath = '/home/kyle/GWA/NANOGrav/PsrSigSim/'
 
 
 #Bokeh imports
-from bokeh.io import curdoc, output_file, show
+from bokeh.io import curdoc
 from bokeh.layouts import column, row, widgetbox, layout, Spacer
 from bokeh.models import ColumnDataSource, Range1d, LinearColorMapper
 import bokeh.models.widgets as widgets
 from bokeh.plotting import figure
 
 
-#Default values for psr_dict----------------------------------------------------
-psr_dict = {}
-psr_dict['f0'] = 1400                   #Central frequency
-psr_dict['F0'] = 218                    #Pulsar spin freq
-psr_dict['bw'] = 400                    #Bandwidth
-psr_dict['Nf'] = 512                    #Frequency bins
-psr_dict['ObsTime'] = 1000/psr_dict['F0']  #Observation time
-psr_dict['f_samp'] = 0.2                #Sampling frequency
-psr_dict['SignalType'] = "intensity"    #'intensity' which carries a Nf x Nt
-#filterbank of pulses or 'voltage' which carries a 4 x Nt array of
-#voltage vs. time pulses representing 4 stokes channels
-psr_dict['dm'] = 0.1                     #Dispersion Measure Pescs/(CM^3)
-# V_ISS -- Intersteller Scintilation Velocity
-psr_dict['scint_bw'] =  15.6            #Scintilation Bandwidth
-psr_dict['scint_timescale'] = 2630      #Scintilation Timescale
-# pulsar -- pulsar name
-# telescope -- telescope name(GBT or Arecibo)
-psr_dict['freq_band'] = 1400            #Frequency band [327 ,430, 820, 1400, 2300]
-# aperature -- aperature (m)
-# area -- collecting area (m^2)
-# Tsys -- system temp (K), total of receiver, sky, spillover, etc. (only needed for noise)
-# name -- GBT or Arecibo
-# tau_scatter -- scattering time (ms)
-psr_dict['radiometer_noise'] =  False   #radiometer noise
-psr_dict['data_type']='float32'         #Was int8
-psr_dict['flux'] = 3
-psr_dict['to_DM_Broaden'] = False
+dataConstants = None
+with open('PsrSigSim_TeachingApp/constants.json','r') as fileIn:
+    dataConstants = json.load(fileIn)
 
-
-#Constants for generating data--------------------------------------------------
-dm_range = (0,10)
-dm_range_spacing = 0.25
-NumPulses = 1 #Don't change this. A bunch of stuff uses variables that depend on
-#this being 1
-startingPeriod = 0
-start_time = (startingPeriod / psr_dict['F0']) *1000  #Getting start time in ms
-TimeBinSize = (1.0/psr_dict['f_samp']) * 0.001
-start_bin = int((start_time)/TimeBinSize)
-stop_time = (((1 / psr_dict['F0']) *1000) * NumPulses) + start_time
-# start_time + however many pulses times the pulsar period in ms
-stop_bin =int((stop_time)/TimeBinSize)
-first_freq = psr_dict['f0']-(psr_dict['bw']/2)
-last_freq = psr_dict['f0']+(psr_dict['bw']/2)
-
-foldingAdditionFactor = 0.1
-FL_tau_scatter =0.005
-FL_f0 = 1150
-FL_bw = 1700
-FL_Nf = 34     #Using using 34, the Bandwidth will make integers for steps in the slider
-
-FL_dm = 0.001
-FL_flux = 80
+for activity in all_dictionaries: #Fill in the values needed to calculate
+    global all_dictionaries
+    actDict = all_dictionaries[activity]
+    psr_dict = actDict['psr_dict']
+    bokeh_times = actDict['bokeh_times']
+    psr_dict['ObsTime'] = 1000/psr_dict['F0']
+    bokeh_times['stop_time'] = (1.0/ psr_dict['F0']) *1000
+    bokeh_times['TimeBinSize'] = (1.0/psr_dict['f_samp'])* 0.001
+    bokeh_times['stop_bin'] = int( bokeh_times['stop_time']/bokeh_times['TimeBinSize'])
+    bokeh_times['first_freq'] = psr_dict['f0']-(psr_dict['bw']/2)
+    bokeh_times['last_freq'] =psr_dict['f0']+(psr_dict['bw']/2)
 
 
 
@@ -83,22 +47,29 @@ PostFoldingData = None
 
 
 ################################################################################
+dm_range = dataConstants['dm_constants']['dm_range']
+dm_step = dataConstants['dm_constants']['dm_range_spacing']
+
 dmSlider = widgets.Slider(title="Dispersion Measure", value= 0,
                           start=dm_range[0], end=dm_range[1],
-                          step=dm_range_spacing)
+                          step=dm_step)
 
-scStep = FL_bw/FL_Nf #Span of frequencies to one bin
-scStart = FL_f0 - (FL_bw/2) + (scStep/2) #Middle of the lowest frequency bin
-scEnd = FL_f0 + (FL_bw/2) - (scStep/2) #Middl6e of the highest frequency bin
+
+scStep = dataConstants['scatter_constants']['psr_dict']['bw'] / dataConstants['scatter_constants']['Nf']
+scStart = dataConstants['scatter_constants']['psr_dict']['f0'] - (dataConstants['scatter_constants']['psr_dict']['bw']/2) + (scStep/2)
+scEnd = dataConstants['scatter_constants']['psr_dict']['f0'] + (dataConstants['scatter_constants']['psr_dict']['bw']/2) + (scStep/2)
+
 scSlider = widgets.Slider(title="Frequency (MHz)",value= scEnd ,start= scStart,
                           end=scEnd, step=scStep)
 
-flSlider = widgets.Slider(title="Folding Frequency (Hz)", value=psr_dict['F0']/2,
-                          start=psr_dict['F0']/4, end=psr_dict['F0']*3,
-                          step=psr_dict['F0']*.01)
+
+fold_activity_F0 = dataConstants['fold_constants']['psr_dict']['F0']
+flSlider = widgets.Slider(title="Folding Frequency (Hz)", value=fold_activity_F0/2,
+                          start=fold_activity_F0/4, end=fold_activity_F0*3,
+                          step=fold_activity_F0*.01)
 
 
-
+################################################################################
 
 question1Group = widgets.RadioGroup(labels=["The plot would have 2 pulses with a larger Signal to Noise ratio",
                                     "The plot would have 1 pulse with a larger Signal to Noise ratio",
@@ -155,6 +126,9 @@ def setup():
         readData()
     except:
         genData()
+
+def genFolding():
+    pass
 
 def genData():
     try:
