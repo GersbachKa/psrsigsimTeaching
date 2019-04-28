@@ -25,7 +25,7 @@ psr_dict['F0'] = 218                    #Pulsar spin freq
 psr_dict['bw'] = 400                    #Bandwidth
 psr_dict['Nf'] = 512                    #Frequency bins
 psr_dict['ObsTime'] = 1000/psr_dict['F0']  #Observation time
-psr_dict['f_samp'] = 0.2                #Sampling frequency
+psr_dict['f_samp'] = 0.08                #Sampling frequency
 psr_dict['SignalType'] = "intensity"    #'intensity' which carries a Nf x Nt
 #filterbank of pulses or 'voltage' which carries a 4 x Nt array of
 #voltage vs. time pulses representing 4 stokes channels
