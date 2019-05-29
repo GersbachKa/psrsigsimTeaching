@@ -8,7 +8,7 @@ import os
 
 #Change this path to specify the location of the PsrSigSim
 pssPath = '/home/kyle/GWA/NANOGrav/PsrSigSim/'
-
+dataFilePath = 'PsrSigSim_TeachingApp/PsrTeachingData_V1.1.hdf5'
 
 #Bokeh imports
 from bokeh.io import curdoc, output_file, show
@@ -17,13 +17,12 @@ from bokeh.models import ColumnDataSource, Range1d, LinearColorMapper
 import bokeh.models.widgets as widgets
 from bokeh.plotting import figure
 
-
 #Default values for psr_dict----------------------------------------------------
 psr_dict = {}
 psr_dict['f0'] = 1400                   #Central frequency
 psr_dict['F0'] = 218                    #Pulsar spin freq
 psr_dict['bw'] = 400                    #Bandwidth
-psr_dict['Nf'] = 512                    #Frequency bins
+psr_dict['Nf'] = 256                    #Frequency bins
 psr_dict['ObsTime'] = 1000/psr_dict['F0']  #Observation time
 psr_dict['f_samp'] = 0.08                #Sampling frequency
 psr_dict['SignalType'] = "intensity"    #'intensity' which carries a Nf x Nt
@@ -220,10 +219,10 @@ def genData():
 
     ScatterData = psr.pulsar.profile
 
-    if(os.path.exists('PsrSigSim_TeachingApp/PsrTeachingData.hdf5')):
-        os.remove('PsrSigSim_TeachingApp/PsrTeachingData.hdf5')
+    if(os.path.exists(dataFilePath)):
+        os.remove(dataFilePath)
 
-    f = h5py.File('PsrSigSim_TeachingApp/PsrTeachingData.hdf5','w')
+    f = h5py.File(dataFilePath,'w')
 
     dataString = 'DMData'
     DMFullData = np.array(DMFullData)
@@ -243,7 +242,7 @@ def readData():
     global DMFullData
     global PreFoldingData
     global ScatterData
-    f = h5py.File('PsrSigSim_TeachingApp/PsrTeachingData.hdf5','r')
+    f = h5py.File(dataFilePath,'r')
 
     dataString = 'DMData'
     DMFullData = np.array(f.get(dataString),copy=True)
@@ -419,7 +418,7 @@ FLsrc = ColumnDataSource(data=dict(x = np.linspace(0,1,PostFoldingData.shape[0])
 
 FLfig = figure(plot_width = 400, plot_height = 400,
               #x_range = Range1d(start_time,stop_time),
-              y_range = Range1d(0,25),
+              y_range = Range1d(0,20),
               x_axis_label = 'Phase',
               y_axis_label = 'Pulse Intensity',
               tools = "crosshair,pan,reset,wheel_zoom")
