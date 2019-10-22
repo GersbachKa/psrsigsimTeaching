@@ -376,7 +376,7 @@ DMsrc = ColumnDataSource( data=dict(image=[DMFullData[0,:,:]],x=[start_time],y=[
 
 
 DMfig = figure(title='Filter Bank',
-             x_range = Range1d(start_time,stop_time),
+             x_range = Range1d(0,1),
              y_range = Range1d(first_freq,last_freq),
              x_axis_label = 'Phase',
              y_axis_label = 'Frequency (MHz)',
